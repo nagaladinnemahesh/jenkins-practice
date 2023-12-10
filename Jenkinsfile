@@ -1,40 +1,35 @@
 pipeline {
     agent any
-    
+
     stages {
         stage('Checkout') {
             steps {
+                // Assuming your code repository is Git. Adjust this as needed.
                 checkout scm
             }
         }
-        
-        stage('Build Docker Image') {
+
+        stage('Build') {
             steps {
                 script {
-                    docker.build('my-node-app', '.')
-                }
-            }
-        }
-
-        stage('Check Node.js Version') {
-            steps {
-                script {
-                    def nodeVersion = docker.image('my-node-app').inside {
-                        sh(script: 'node --version', returnStatus: true).trim()
-                    }
-
-                    echo "Node.js version in the Docker image: $nodeVersion"
+                    // Build your project, replace 'mvn clean install' with your build command
+                    sh 'mvn clean install'
                 }
             }
         }
     }
-    
+
     post {
+        success {
+            echo 'Build successful! Deploy or do additional tasks here.'
+        }
+
+        failure {
+            echo 'Build failed! Take necessary actions.'
+        }
+
         always {
-            script {
-                cleanWs()
-                docker.image('my-node-app').remove()
-            }
+            // Clean up or additional tasks that should run regardless of success or failure
         }
     }
 }
