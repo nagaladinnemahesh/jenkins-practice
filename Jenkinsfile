@@ -1,25 +1,39 @@
 pipeline {
-    agent {
-        docker {
-            image 'node:14' // Use any Node.js version you need
-        }
-    }
-
+    agent any
+    
     stages {
-        stage('Build') {
+        stage('Checkout') {
             steps {
-                sh 'npm --version'
-                sh 'node --version'
-                // Add your build steps here
+                checkout scm
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build('my-node-app', '.')
+                }
+            }
+        }
+
+        stage('Check Node.js Version') {
+            steps {
+                script {
+                    def nodeVersion = docker.image('my-node-app').inside {
+                        sh(script: 'node --version', returnStatus: true).trim()
+                    }
+
+                    echo "Node.js version in the Docker image: $nodeVersion"
+                }
             }
         }
     }
-
+    
     post {
         always {
             script {
-                // Clean up: Remove the Docker image after the build
                 cleanWs()
+                docker.image('my-node-app').remove()
             }
         }
     }
